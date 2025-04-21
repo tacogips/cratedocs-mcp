@@ -9,9 +9,7 @@ use html2md::parse_html;
 //};
 //use mcp_server::router::CapabilitiesBuilder;
 use rmcp::{
-    handler::server::wrapper::Json,
-    model::{ServerCapabilities, ServerInfo},
-    schemars, tool, ServerHandler,
+    handler::server::wrapper::Json, model::*, schemars, tool, Error as McpError, ServerHandler,
 };
 
 use reqwest::Client;
@@ -171,10 +169,11 @@ impl CargoDocRouter {
                 "CrateDocs/0.1.0 (https://github.com/d6e/cratedocs-mcp)",
             )
             .send()
-            .await {
-                Ok(resp) => resp,
-                Err(e) => return format!("Failed to fetch documentation: {}", e)
-            };
+            .await
+        {
+            Ok(resp) => resp,
+            Err(e) => return format!("Failed to fetch documentation: {}", e),
+        };
 
         if !response.status().is_success() {
             return format!(
@@ -185,7 +184,7 @@ impl CargoDocRouter {
 
         let html_body = match response.text().await {
             Ok(body) => body,
-            Err(e) => return format!("Failed to read response body: {}", e)
+            Err(e) => return format!("Failed to read response body: {}", e),
         };
 
         // Convert HTML to markdown
@@ -197,17 +196,21 @@ impl CargoDocRouter {
         markdown_body
     }
 
-    #[tool(description = "Look up documentation for a specific item in a Rust crate (returns markdown)")]
+    #[tool(
+        description = "Look up documentation for a specific item in a Rust crate (returns markdown)"
+    )]
     async fn lookup_item_tool(
         &self,
         #[tool(param)]
         #[schemars(description = "The name of the crate")]
         crate_name: String,
-        
+
         #[tool(param)]
-        #[schemars(description = "Path to the item (e.g., 'vec::Vec' or 'crate_name::vec::Vec' - crate prefix will be automatically stripped)")]
+        #[schemars(
+            description = "Path to the item (e.g., 'vec::Vec' or 'crate_name::vec::Vec' - crate prefix will be automatically stripped)"
+        )]
         item_path: String,
-        
+
         #[tool(param)]
         #[schemars(description = "The version of the crate (optional, defaults to latest)")]
         version: Option<String>,
@@ -221,10 +224,12 @@ impl CargoDocRouter {
         #[tool(param)]
         #[schemars(description = "The search query")]
         query: String,
-        
+
         #[tool(param)]
-        #[schemars(description = "Maximum number of results to return (optional, defaults to 10, max 100)")]
-        limit: Option<u32>
+        #[schemars(
+            description = "Maximum number of results to return (optional, defaults to 10, max 100)"
+        )]
+        limit: Option<u32>,
     ) -> String {
         let limit = limit.unwrap_or(10).min(100); // Cap at 100 results
 
@@ -241,21 +246,19 @@ impl CargoDocRouter {
                 "CrateDocs/0.1.0 (https://github.com/d6e/cratedocs-mcp)",
             )
             .send()
-            .await {
-                Ok(resp) => resp,
-                Err(e) => return format!("Failed to search crates.io: {}", e)
-            };
+            .await
+        {
+            Ok(resp) => resp,
+            Err(e) => return format!("Failed to search crates.io: {}", e),
+        };
 
         if !response.status().is_success() {
-            return format!(
-                "Failed to search crates.io. Status: {}",
-                response.status()
-            );
+            return format!("Failed to search crates.io. Status: {}", response.status());
         }
 
         let body = match response.text().await {
             Ok(text) => text,
-            Err(e) => return format!("Failed to read response body: {}", e)
+            Err(e) => return format!("Failed to read response body: {}", e),
         };
 
         // Check if response is JSON (API response) or HTML (web page)
@@ -362,7 +365,7 @@ impl CargoDocRouter {
             if response.status().is_success() {
                 let html_body = match response.text().await {
                     Ok(body) => body,
-                    Err(e) => return format!("Failed to read response body: {}", e)
+                    Err(e) => return format!("Failed to read response body: {}", e),
                 };
 
                 // Convert HTML to markdown
