@@ -34,45 +34,51 @@ async fn stdio_client() -> Result<()> {
         },
         "id": 0
     });
-    
+
     println!("Sending initialize request...");
-    stdin.write_all(initialize_request.to_string().as_bytes()).await?;
+    stdin
+        .write_all(initialize_request.to_string().as_bytes())
+        .await?;
     stdin.write_all(b"\n").await?;
     stdin.flush().await?;
-    
+
     // Read initialize response
     let mut init_response = String::new();
     stdout.read_line(&mut init_response).await?;
     println!("Initialize response: {:?}", init_response);
-    
+
     // Send initialized notification
     let initialized_notification = json!({
         "jsonrpc": "2.0",
         "method": "notifications/initialized"
     });
-    
+
     println!("Sending initialized notification...");
-    stdin.write_all(initialized_notification.to_string().as_bytes()).await?;
+    stdin
+        .write_all(initialized_notification.to_string().as_bytes())
+        .await?;
     stdin.write_all(b"\n").await?;
     stdin.flush().await?;
-    
+
     // Get list of available tools first
     let list_tools_request = json!({
         "jsonrpc": "2.0",
         "method": "tools/list",
         "id": 1
     });
-    
+
     println!("Sending request to list available tools...");
-    stdin.write_all(list_tools_request.to_string().as_bytes()).await?;
+    stdin
+        .write_all(list_tools_request.to_string().as_bytes())
+        .await?;
     stdin.write_all(b"\n").await?;
     stdin.flush().await?;
-    
+
     // Read tools list response
     let mut tools_response = String::new();
     stdout.read_line(&mut tools_response).await?;
     println!("Tools list response: {:?}", tools_response);
-    
+
     // Send a request to lookup tokio crate using tools/call method
     let request = json!({
         "jsonrpc": "2.0",
@@ -188,10 +194,10 @@ async fn main() -> Result<()> {
         println!("Error in STDIN/STDOUT client: {}", e);
     }
 
-    //println!("\n2. Testing HTTP/SSE client:");
-    //if let Err(e) = http_sse_client().await {
-    //    println!("Error in HTTP/SSE client: {}", e);
-    //}
+    println!("\n2. Testing HTTP/SSE client:");
+    if let Err(e) = http_sse_client().await {
+        println!("Error in HTTP/SSE client: {}", e);
+    }
 
     Ok(())
 }
