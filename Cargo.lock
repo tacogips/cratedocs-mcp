@@ -369,6 +369,7 @@ dependencies = [
  "rmcp",
  "serde",
  "serde_json",
+ "temp-dir",
  "tokio",
  "tokio-util",
  "tower 0.4.13",
@@ -1969,6 +1970,11 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "temp-dir"
+version = "0.1.14"
+source = "git+https://gitlab.com/leonhard-llc/ops.git?branch=main#780e23c069809c25295bb03db2b422be6159fb58"
 
 [[package]]
 name = "tempfile"

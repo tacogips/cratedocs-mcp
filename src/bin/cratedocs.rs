@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::net::SocketAddr;
+use temp_dir::TempDir;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -44,8 +45,22 @@ async fn main() -> Result<()> {
 }
 
 async fn run_stdio_server(debug: bool) -> Result<()> {
+    // Create a temp directory with prefix
+    let temp_dir = TempDir::new().map_err(|e| anyhow::anyhow!("Failed to create temp directory: {}", e))?;
+    
+    // Create logs directory inside the temp directory
+    let logs_dir = temp_dir.path().join("logs");
+    std::fs::create_dir_all(&logs_dir).map_err(|e| anyhow::anyhow!("Failed to create logs directory: {}", e))?;
+    
+    // Store the temp directory in a static variable to keep it alive for the duration of the program
+    // This is important because TempDir deletes the directory when dropped
+    static mut TEMP_DIR: Option<TempDir> = None;
+    unsafe {
+        TEMP_DIR = Some(temp_dir);
+    }
+    
     // Set up file appender for logging
-    let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "stdio-server.log");
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, logs_dir, "stdio-server.log");
 
     // Initialize the tracing subscriber with file logging
     let level = if debug {
