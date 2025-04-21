@@ -15,7 +15,7 @@ impl ServerHandler for CargoDocRouter {
 
     async fn list_resources(
         &self,
-        _request: Option<PaginatedRequestParam>,
+        _request: PaginatedRequestParam,
         _: RequestContext<RoleServer>,
     ) -> Result<ListResourcesResult, McpError> {
         Ok(ListResourcesResult {
@@ -34,7 +34,7 @@ impl ServerHandler for CargoDocRouter {
 
     async fn list_prompts(
         &self,
-        _request: Option<PaginatedRequestParam>,
+        _request: PaginatedRequestParam,
         _: RequestContext<RoleServer>,
     ) -> Result<ListPromptsResult, McpError> {
         Ok(ListPromptsResult {
@@ -53,7 +53,7 @@ impl ServerHandler for CargoDocRouter {
 
     async fn list_resource_templates(
         &self,
-        _request: Option<PaginatedRequestParam>,
+        _request: PaginatedRequestParam,
         _: RequestContext<RoleServer>,
     ) -> Result<ListResourceTemplatesResult, McpError> {
         Ok(ListResourceTemplatesResult {

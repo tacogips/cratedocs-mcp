@@ -11,11 +11,12 @@ repository = "https://github.com/d6e/cratedocs-mcp"
 members = ["."]
 
 [dependencies]
-rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = [
+rmcp = { version = "0.1", features = [
     "server",
     "transport-sse-server",
     "transport-io",
 ] }
+
 
 # MCP dependencies from GitHub
 # HTTP and networking
