@@ -143,7 +143,7 @@ impl CargoDocRouter {
         #[tool(param)]
         #[schemars(description = "The version of the crate (optional, defaults to latest)")]
         version: Option<String>,
-    ) -> Result<String, ToolError> {
+    ) -> String {
         // Check cache first
         let cache_key = if let Some(ver) = &version {
             format!("{}:{}", crate_name, ver)
@@ -152,7 +152,7 @@ impl CargoDocRouter {
         };
 
         if let Some(doc) = self.cache.get(&cache_key).await {
-            return Ok(doc);
+            return doc;
         }
 
         // Construct the docs.rs URL for the crate
@@ -163,7 +163,7 @@ impl CargoDocRouter {
         };
 
         // Fetch the documentation page
-        let response = self
+        let response = match self
             .client
             .get(&url)
             .header(
@@ -171,21 +171,22 @@ impl CargoDocRouter {
                 "CrateDocs/0.1.0 (https://github.com/d6e/cratedocs-mcp)",
             )
             .send()
-            .await
-            .map_err(|e| {
-                ToolError::ExecutionError(format!("Failed to fetch documentation: {}", e))
-            })?;
+            .await {
+                Ok(resp) => resp,
+                Err(e) => return format!("Failed to fetch documentation: {}", e)
+            };
 
         if !response.status().is_success() {
-            return Err(ToolError::ExecutionError(format!(
+            return format!(
                 "Failed to fetch documentation. Status: {}",
                 response.status()
-            )));
+            );
         }
 
-        let html_body = response.text().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to read response body: {}", e))
-        })?;
+        let html_body = match response.text().await {
+            Ok(body) => body,
+            Err(e) => return format!("Failed to read response body: {}", e)
+        };
 
         // Convert HTML to markdown
         let markdown_body = parse_html(&html_body);
@@ -193,7 +194,7 @@ impl CargoDocRouter {
         // Cache the markdown result
         self.cache.set(cache_key, markdown_body.clone()).await;
 
-        Ok(markdown_body)
+        markdown_body
     }
 
     #[tool(description = "Look up documentation for a specific item in a Rust crate (returns markdown)")]
@@ -210,7 +211,7 @@ impl CargoDocRouter {
         #[tool(param)]
         #[schemars(description = "The version of the crate (optional, defaults to latest)")]
         version: Option<String>,
-    ) -> Result<String, ToolError> {
+    ) -> String {
         self.lookup_item(crate_name, item_path, version).await
     }
 
@@ -224,7 +225,7 @@ impl CargoDocRouter {
         #[tool(param)]
         #[schemars(description = "Maximum number of results to return (optional, defaults to 10, max 100)")]
         limit: Option<u32>
-    ) -> Result<String, ToolError> {
+    ) -> String {
         let limit = limit.unwrap_or(10).min(100); // Cap at 100 results
 
         let url = format!(
@@ -232,7 +233,7 @@ impl CargoDocRouter {
             query, limit
         );
 
-        let response = self
+        let response = match self
             .client
             .get(&url)
             .header(
@@ -240,27 +241,30 @@ impl CargoDocRouter {
                 "CrateDocs/0.1.0 (https://github.com/d6e/cratedocs-mcp)",
             )
             .send()
-            .await
-            .map_err(|e| ToolError::ExecutionError(format!("Failed to search crates.io: {}", e)))?;
+            .await {
+                Ok(resp) => resp,
+                Err(e) => return format!("Failed to search crates.io: {}", e)
+            };
 
         if !response.status().is_success() {
-            return Err(ToolError::ExecutionError(format!(
+            return format!(
                 "Failed to search crates.io. Status: {}",
                 response.status()
-            )));
+            );
         }
 
-        let body = response.text().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to read response body: {}", e))
-        })?;
+        let body = match response.text().await {
+            Ok(text) => text,
+            Err(e) => return format!("Failed to read response body: {}", e)
+        };
 
         // Check if response is JSON (API response) or HTML (web page)
         if body.trim().starts_with('{') {
             // This is likely JSON data, return as is
-            Ok(body)
+            body
         } else {
             // This is likely HTML, convert to markdown
-            Ok(parse_html(&body))
+            parse_html(&body)
         }
     }
 
@@ -270,7 +274,7 @@ impl CargoDocRouter {
         crate_name: String,
         mut item_path: String,
         version: Option<String>,
-    ) -> Result<String, ToolError> {
+    ) -> String {
         // Strip crate name prefix from the item path if it exists
         let crate_prefix = format!("{}::", crate_name);
         if item_path.starts_with(&crate_prefix) {
@@ -285,7 +289,7 @@ impl CargoDocRouter {
         };
 
         if let Some(doc) = self.cache.get(&cache_key).await {
-            return Ok(doc);
+            return doc;
         }
 
         // Process the item path to determine the item type
@@ -294,9 +298,7 @@ impl CargoDocRouter {
         let parts: Vec<&str> = item_path.split("::").collect();
 
         if parts.is_empty() {
-            return Err(ToolError::InvalidParameters(
-                "Invalid item path. Expected format: module::path::ItemName".to_string(),
-            ));
+            return "Invalid item path. Expected format: module::path::ItemName".to_string();
         }
 
         let item_name = parts.last().unwrap().to_string();
@@ -358,9 +360,10 @@ impl CargoDocRouter {
 
             // If found, process and return
             if response.status().is_success() {
-                let html_body = response.text().await.map_err(|e| {
-                    ToolError::ExecutionError(format!("Failed to read response body: {}", e))
-                })?;
+                let html_body = match response.text().await {
+                    Ok(body) => body,
+                    Err(e) => return format!("Failed to read response body: {}", e)
+                };
 
                 // Convert HTML to markdown
                 let markdown_body = parse_html(&html_body);
@@ -368,17 +371,17 @@ impl CargoDocRouter {
                 // Cache the markdown result
                 self.cache.set(cache_key, markdown_body.clone()).await;
 
-                return Ok(markdown_body);
+                return markdown_body;
             }
 
             last_error = Some(format!("Status code: {}", response.status()));
         }
 
         // If we got here, none of the item types worked
-        Err(ToolError::ExecutionError(format!(
+        format!(
             "Failed to fetch item documentation. No matching item found. Last error: {}",
             last_error.unwrap_or_else(|| "Unknown error".to_string())
-        )))
+        )
     }
 }
 //
