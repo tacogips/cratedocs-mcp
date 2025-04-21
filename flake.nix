@@ -44,6 +44,9 @@
             pkgs.nixpkgs-fmt
             pkgs.openssl
             pkgs.pkg-config
+            pkgs.nodejs
+            pkgs.nodePackages.npm
+            pkgs.go-task
           ];
           
           # Add OpenSSL configuration
