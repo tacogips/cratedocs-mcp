@@ -84,7 +84,7 @@ async fn http_sse_client() -> Result<()> {
 
     // Parse the first message to get the session ID
     // In a real implementation, you would properly handle the SSE stream
-    if let None = response.headers().get("x-accel-buffering") {
+    if response.headers().get("x-accel-buffering").is_none() {
         println!("Could not get session ID from SSE endpoint");
         return Ok(());
     }

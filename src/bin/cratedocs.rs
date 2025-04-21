@@ -1,8 +1,5 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use cratedocs_mcp::tools::CargoDocRouter;
-use rmcp::handler::server::ServerHandler;
-use serde_json::json;
 use std::net::SocketAddr;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
