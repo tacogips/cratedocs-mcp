@@ -1,12 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use cratedocs_mcp::tools::DocRouter;
 use mcp_core::Content;
-use mcp_server::router::RouterService;
-use mcp_server::{ByteTransport, Router, Server};
 use serde_json::json;
 use std::net::SocketAddr;
-use tokio::io::{stdin, stdout};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -140,15 +136,9 @@ async fn run_stdio_server(debug: bool) -> Result<()> {
 
     tracing::info!("Starting MCP documentation server in STDIN/STDOUT mode");
 
-    // Create an instance of our documentation router
-    let router = RouterService(DocRouter::new());
-
-    // Create and run the server
-    let server = Server::new(router);
-    let transport = ByteTransport::new(stdin(), stdout());
-
-    tracing::info!("Documentation server initialized and ready to handle requests");
-    Ok(server.run(transport).await?)
+    // Run the server using the new rust-sdk implementation
+    cratedocs_mcp::transport::stdio::run_stdio_server().await
+        .map_err(|e| anyhow::anyhow!("Error running STDIO server: {}", e))
 }
 
 async fn run_http_server(address: String, debug: bool) -> Result<()> {
@@ -165,20 +155,13 @@ async fn run_http_server(address: String, debug: bool) -> Result<()> {
 
     // Parse socket address
     let addr: SocketAddr = address.parse()?;
-    let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    tracing::debug!(
-        "Rust Documentation Server listening on {}",
-        listener.local_addr()?
-    );
-    tracing::info!(
-        "Access the Rust Documentation Server at http://{}/sse",
-        addr
-    );
+    tracing::debug!("Rust Documentation Server listening on {}", addr);
+    tracing::info!("Access the Rust Documentation Server at http://{}/sse", addr);
 
-    // Create app and run server
-    let app = cratedocs_mcp::transport::http_sse_server::App::new();
-    axum::serve(listener, app.router()).await?;
+    // Create app and run server using the new rust-sdk implementation
+    let app = cratedocs_mcp::transport::sse_server::SseServerApp::new(addr);
+    app.serve().await?;
 
     Ok(())
 }
@@ -199,7 +182,7 @@ async fn run_list_tools(debug: bool) -> Result<()> {
         .init();
 
     // Create router instance to access available tools
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
 
     // Get tools from the DocRouter implementation
     let tools = router.list_tools();
@@ -277,7 +260,7 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
         .init();
 
     // Create router instance
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
 
     tracing::info!("Testing tool: {}", tool);
 
