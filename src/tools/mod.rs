@@ -1,4 +1,4 @@
-pub mod docs;
+pub mod cargo_docs;
 
-pub use docs::CargoDocRouter;
-pub use docs::DocCache;
+pub use cargo_docs::CargoDocRouter;
+pub use cargo_docs::DocCache;

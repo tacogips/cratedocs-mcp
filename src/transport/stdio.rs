@@ -1,4 +1,4 @@
-use crate::tools::docs::CargoDocRouter;
+use crate::tools::cargo_docs::CargoDocRouter;
 use anyhow::Result;
 use rmcp::transport::stdio;
 use rmcp::ServiceExt;

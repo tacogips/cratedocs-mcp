@@ -1,4 +1,4 @@
-use crate::tools::docs::CargoDocRouter;
+use crate::tools::cargo_docs::CargoDocRouter;
 use rmcp::{model::*, service::RequestContext, Error as McpError, RoleServer, ServerHandler};
 
 impl ServerHandler for CargoDocRouter {
