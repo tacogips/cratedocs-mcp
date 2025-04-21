@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
 
 async fn run_stdio_server(debug: bool) -> Result<()> {
     // Create a temp directory with prefix
-    let temp_dir = TempDir::new().map_err(|e| anyhow::anyhow!("Failed to create temp directory: {}", e))?;
+    let temp_dir = TempDir::with_prefix("cratedocs-mcp").map_err(|e| anyhow::anyhow!("Failed to create temp directory: {}", e))?;
     
     // Create logs directory inside the temp directory
     let logs_dir = temp_dir.path().join("logs");
