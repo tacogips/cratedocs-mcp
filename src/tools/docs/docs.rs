@@ -133,13 +133,15 @@ impl CargoDocRouter {
     //        ]
     //    }
 
-    #[tool(name = "lookup_crate")]
+    #[tool(description = "Look up documentation for a Rust crate (returns markdown)")]
     async fn lookup_crate(
         &self,
         #[tool(param)]
+        #[schemars(description = "The name of the crate to look up")]
         crate_name: String,
 
         #[tool(param)]
+        #[schemars(description = "The version of the crate (optional, defaults to latest)")]
         version: Option<String>,
     ) -> Result<String, ToolError> {
         // Check cache first
@@ -194,13 +196,33 @@ impl CargoDocRouter {
         Ok(markdown_body)
     }
 
-    #[tool(name = "search_crates")]
+    #[tool(description = "Look up documentation for a specific item in a Rust crate (returns markdown)")]
+    async fn lookup_item_tool(
+        &self,
+        #[tool(param)]
+        #[schemars(description = "The name of the crate")]
+        crate_name: String,
+        
+        #[tool(param)]
+        #[schemars(description = "Path to the item (e.g., 'vec::Vec' or 'crate_name::vec::Vec' - crate prefix will be automatically stripped)")]
+        item_path: String,
+        
+        #[tool(param)]
+        #[schemars(description = "The version of the crate (optional, defaults to latest)")]
+        version: Option<String>,
+    ) -> Result<String, ToolError> {
+        self.lookup_item(crate_name, item_path, version).await
+    }
+
+    #[tool(description = "Search for Rust crates on crates.io (returns JSON or markdown)")]
     async fn search_crates(
         &self,
         #[tool(param)]
+        #[schemars(description = "The search query")]
         query: String,
         
         #[tool(param)]
+        #[schemars(description = "Maximum number of results to return (optional, defaults to 10, max 100)")]
         limit: Option<u32>
     ) -> Result<String, ToolError> {
         let limit = limit.unwrap_or(10).min(100); // Cap at 100 results
@@ -242,6 +264,7 @@ impl CargoDocRouter {
         }
     }
 
+    // This function is not directly exposed as a tool but used internally
     async fn lookup_item(
         &self,
         crate_name: String,
