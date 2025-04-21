@@ -1,4 +1,4 @@
 pub mod docs;
 
-pub use docs::DocRouter;
+pub use docs::CargoDocRouter;
 pub use docs::docs::DocCache;

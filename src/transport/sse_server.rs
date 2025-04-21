@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rmcp::transport::sse_server::SseServer;
 use std::net::SocketAddr;
-use crate::tools::CargoDocRouter;
+use crate::tools::docs::CargoDocRouter;
 
 pub struct SseServerApp {
     bind_addr: SocketAddr,

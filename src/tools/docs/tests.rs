@@ -1,4 +1,4 @@
-use crate::tools::{DocCache, DocRouter};
+use crate::tools::{DocCache, CargoDocRouter};
 use mcp_core::{Content, ToolError};
 use mcp_server::Router;
 use serde_json::json;
@@ -59,7 +59,7 @@ async fn test_cache_concurrent_access() {
 // Test router basics
 #[tokio::test]
 async fn test_router_capabilities() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     
     // Test basic properties
     assert_eq!(router.name(), "rust-docs");
@@ -72,7 +72,7 @@ async fn test_router_capabilities() {
 
 #[tokio::test]
 async fn test_list_tools() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let tools = router.list_tools();
     
     // Should have exactly 3 tools
@@ -104,7 +104,7 @@ async fn test_list_tools() {
 // Test error cases
 #[tokio::test]
 async fn test_invalid_tool_call() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("invalid_tool", json!({})).await;
     
     // Should return NotFound error
@@ -116,7 +116,7 @@ async fn test_invalid_tool_call() {
 
 #[tokio::test]
 async fn test_lookup_crate_missing_parameter() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("lookup_crate", json!({})).await;
     
     // Should return InvalidParameters error
@@ -128,7 +128,7 @@ async fn test_lookup_crate_missing_parameter() {
 
 #[tokio::test]
 async fn test_search_crates_missing_parameter() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("search_crates", json!({})).await;
     
     // Should return InvalidParameters error
@@ -140,7 +140,7 @@ async fn test_search_crates_missing_parameter() {
 
 #[tokio::test]
 async fn test_lookup_item_missing_parameters() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     
     // Missing both parameters
     let result = router.call_tool("lookup_item", json!({})).await;
@@ -174,7 +174,7 @@ async fn test_lookup_crate_network_error() {
         .build()
         .unwrap();
     
-    let mut router = DocRouter::new();
+    let mut router = CargoDocRouter::new();
     // Override the client field
     router.client = client;
     
@@ -215,7 +215,7 @@ async fn test_lookup_crate_not_found() {
 // Cache functionality tests
 #[tokio::test]
 async fn test_lookup_crate_uses_cache() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     
     // Manually insert a cache entry to simulate a previous lookup
     router.cache.set(
@@ -241,7 +241,7 @@ async fn test_lookup_crate_uses_cache() {
 
 #[tokio::test]
 async fn test_lookup_item_uses_cache() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     
     // Manually insert a cache entry to simulate a previous lookup
     router.cache.set(
@@ -273,7 +273,7 @@ async fn test_lookup_item_uses_cache() {
 #[tokio::test]
 #[ignore = "Requires network access"]
 async fn test_lookup_crate_integration() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("lookup_crate", json!({
         "crate_name": "serde"
     })).await;
@@ -291,7 +291,7 @@ async fn test_lookup_crate_integration() {
 #[tokio::test]
 #[ignore = "Requires network access"]
 async fn test_search_crates_integration() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("search_crates", json!({
         "query": "json",
         "limit": 5
@@ -319,7 +319,7 @@ async fn test_search_crates_integration() {
 #[tokio::test]
 #[ignore = "Requires network access"]
 async fn test_lookup_item_integration() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("lookup_item", json!({
         "crate_name": "serde",
         "item_path": "ser::Serializer"
@@ -347,7 +347,7 @@ async fn test_lookup_item_integration() {
 #[tokio::test]
 #[ignore = "Requires network access"]
 async fn test_search_crates_with_version() {
-    let router = DocRouter::new();
+    let router = CargoDocRouter::new();
     let result = router.call_tool("lookup_crate", json!({
         "crate_name": "tokio",
         "version": "1.0.0"

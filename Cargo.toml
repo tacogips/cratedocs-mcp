@@ -13,6 +13,8 @@ members = ["."]
 [dependencies]
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = [
     "server",
+    "transport-sse-server",
+    "transport-io",
 ] }
 
 # MCP dependencies from GitHub
