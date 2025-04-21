@@ -17,17 +17,70 @@ async fn stdio_client() -> Result<()> {
     let mut stdin = io::BufWriter::new(stdin);
     let mut stdout = BufReader::new(stdout);
 
-    // Send a request to lookup tokio crate
-    let request = json!({
+    // Send initialize request first
+    let initialize_request = json!({
         "jsonrpc": "2.0",
-        "method": "call_tool",
+        "method": "initialize",
         "params": {
-            "name": "lookup_crate",
-            "arguments": {
-                "crate_name": "tokio"
+            "protocolVersion": "2025-03-26",
+            "capabilities": {
+                "tools": {},
+                "sampling": {}
+            },
+            "clientInfo": {
+                "name": "ExampleClient",
+                "version": "1.0.0"
             }
         },
+        "id": 0
+    });
+    
+    println!("Sending initialize request...");
+    stdin.write_all(initialize_request.to_string().as_bytes()).await?;
+    stdin.write_all(b"\n").await?;
+    stdin.flush().await?;
+    
+    // Read initialize response
+    let mut init_response = String::new();
+    stdout.read_line(&mut init_response).await?;
+    println!("Initialize response: {:?}", init_response);
+    
+    // Send initialized notification
+    let initialized_notification = json!({
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    });
+    
+    println!("Sending initialized notification...");
+    stdin.write_all(initialized_notification.to_string().as_bytes()).await?;
+    stdin.write_all(b"\n").await?;
+    stdin.flush().await?;
+    
+    // Get list of available tools first
+    let list_tools_request = json!({
+        "jsonrpc": "2.0",
+        "method": "tools/list",
         "id": 1
+    });
+    
+    println!("Sending request to list available tools...");
+    stdin.write_all(list_tools_request.to_string().as_bytes()).await?;
+    stdin.write_all(b"\n").await?;
+    stdin.flush().await?;
+    
+    // Read tools list response
+    let mut tools_response = String::new();
+    stdout.read_line(&mut tools_response).await?;
+    println!("Tools list response: {:?}", tools_response);
+    
+    // Send a request to lookup tokio crate using direct method call
+    let request = json!({
+        "jsonrpc": "2.0",
+        "method": "lookup_crate",
+        "params": {
+            "crate_name": "tokio"
+        },
+        "id": 2
     });
 
     println!("Sending request to look up tokio crate...");
