@@ -200,82 +200,10 @@ async fn run_list_tools(debug: bool) -> Result<()> {
 
     // Create router instance to access available tools
     let router = DocRouter::new();
-    
-    println!("CrateDocs available tools:\n");
-    
+
     // Get tools from the DocRouter implementation
     let tools = router.list_tools();
-    
-    println!("== Available Documentation Tools ({} found) ==\n", tools.len());
-    
-    // Display detailed information for each tool
-    for tool in &tools {
-        println!("=== TOOL: {} ===\n", tool.name);
-        println!("Description: {}", tool.description);
-        
-        // Extract and display required parameters from input schema
-        if let Some(properties) = tool.input_schema.get("properties") {
-            println!("\nParameters:");
-            
-            if let Some(obj) = properties.as_object() {
-                for (param_name, param_details) in obj {
-                    let required = if let Some(required) = tool.input_schema.get("required") {
-                        if let Some(req_array) = required.as_array() {
-                            req_array.iter().any(|v| v.as_str() == Some(param_name))
-                        } else {
-                            false
-                        }
-                    } else {
-                        false
-                    };
-                    
-                    let description = param_details.get("description")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("No description");
-                    
-                    println!("  - {}{}: {}", 
-                        param_name,
-                        if required { " (required)" } else { " (optional)" },
-                        description
-                    );
-                }
-            }
-        }
-        
-        // Display examples based on tool name
-        println!("\nUsage Example:");
-        match tool.name.as_str() {
-            "lookup_crate" => {
-                println!("  cargo run --bin cratedocs -- test --tool lookup_crate --crate-name tokio");
-                println!("  cargo run --bin cratedocs -- test --tool lookup_crate --crate-name serde --version 1.0.147\n");
-            },
-            "lookup_item" => {
-                println!("  cargo run --bin cratedocs -- test --tool lookup_item --crate-name tokio --item-path sync::mpsc::Sender");
-                println!("  cargo run --bin cratedocs -- test --tool lookup_item --crate-name serde --item-path Serialize --version 1.0.147\n");
-            },
-            "search_crates" => {
-                println!("  cargo run --bin cratedocs -- test --tool search_crates --query logger --limit 5");
-                println!("  cargo run --bin cratedocs -- test --tool search_crates --query async --format json\n");
-            },
-            _ => {
-                // For any other tools that might be added in the future
-                println!("  cargo run --bin cratedocs -- test --tool {}\n", tool.name);
-            }
-        }
-    }
-    
-    tracing::debug!("Retrieved {} available documentation tools", tools.len());
-    
-    println!("== Command Usage ==\n");
-    println!("Run a tool with the test command:");
-    println!("  cargo run --bin cratedocs -- test --tool <tool_name> [options]\n");
-    
-    println!("List available tools:");
-    println!("  cargo run --bin cratedocs -- list-tools\n");
-    
-    println!("Get detailed help:");
-    println!("  cargo run --bin cratedocs -- test --tool help\n");
-    
+    println!("{}", serde_json::to_string_pretty(&tools)?);
     Ok(())
 }
 
