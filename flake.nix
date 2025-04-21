@@ -26,9 +26,17 @@
           packages = [
             rust-toolchain
             pkgs.nixpkgs-fmt
+            pkgs.openssl
+            pkgs.pkg-config
           ];
           
-          shellHook = ''echo "Shell loaded successfully"'';
+          # Add OpenSSL configuration
+          shellHook = ''
+            export OPENSSL_DIR=${pkgs.openssl.dev}
+            export OPENSSL_LIB_DIR=${pkgs.openssl.out}/lib
+            export OPENSSL_INCLUDE_DIR=${pkgs.openssl.dev}/include
+            echo "Shell loaded successfully with OpenSSL configuration"
+          '';
         };
         
         # Simple package definition
@@ -41,11 +49,21 @@
             allowBuiltinFetchGit = true;
           };
           
-          nativeBuildInputs = [ rust-toolchain ];
+          nativeBuildInputs = [ 
+            rust-toolchain 
+            pkgs.pkg-config
+          ];
           
-          buildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [
+          buildInputs = [
+            pkgs.openssl
+          ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
             pkgs.libiconv
           ];
+          
+          # OpenSSL environment variables
+          OPENSSL_DIR = "${pkgs.openssl.dev}";
+          OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
+          OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
         };
       }
     );

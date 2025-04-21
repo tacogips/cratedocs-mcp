@@ -8,7 +8,7 @@ use serde_json::json;
 use std::net::SocketAddr;
 use tokio::io::{stdin, stdout};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
-use tracing_subscriber::{self, EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[derive(Parser)]
 #[command(author, version = "0.1.0", about, long_about = None)]
@@ -30,9 +30,9 @@ enum Commands {
     /// Run the server with HTTP/SSE interface
     Http {
         /// Address to bind the HTTP server to
-        #[arg(short, long, default_value = "127.0.0.1:8080")]
+        #[arg(short, long, default_value = "0.0.0.0:8080")]
         address: String,
-        
+
         /// Enable debug logging
         #[arg(short, long)]
         debug: bool,
@@ -42,35 +42,35 @@ enum Commands {
         /// The tool to test (lookup_crate, search_crates, lookup_item)
         #[arg(long, default_value = "lookup_crate")]
         tool: String,
-        
+
         /// Crate name for lookup_crate and lookup_item
         #[arg(long)]
         crate_name: Option<String>,
-        
+
         /// Item path for lookup_item (e.g., std::vec::Vec)
         #[arg(long)]
         item_path: Option<String>,
-        
+
         /// Search query for search_crates
         #[arg(long)]
         query: Option<String>,
-        
+
         /// Crate version (optional)
         #[arg(long)]
         version: Option<String>,
-        
+
         /// Result limit for search_crates
         #[arg(long)]
         limit: Option<u32>,
-        
+
         /// Output format (markdown, text, json)
         #[arg(long, default_value = "markdown")]
         format: Option<String>,
-        
+
         /// Output file path (if not specified, results will be printed to stdout)
         #[arg(long)]
         output: Option<String>,
-        
+
         /// Enable debug logging
         #[arg(short, long)]
         debug: bool,
@@ -84,17 +84,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::Stdio { debug } => run_stdio_server(debug).await,
         Commands::Http { address, debug } => run_http_server(address, debug).await,
-        Commands::Test { 
-            tool, 
-            crate_name, 
-            item_path, 
-            query, 
-            version, 
-            limit,
-            format,
-            output,
-            debug 
-        } => run_test_tool(TestToolConfig {
+        Commands::Test {
             tool,
             crate_name,
             item_path,
@@ -103,8 +93,21 @@ async fn main() -> Result<()> {
             limit,
             format,
             output,
-            debug
-        }).await,
+            debug,
+        } => {
+            run_test_tool(TestToolConfig {
+                tool,
+                crate_name,
+                item_path,
+                query,
+                version,
+                limit,
+                format,
+                output,
+                debug,
+            })
+            .await
+        }
     }
 }
 
@@ -113,8 +116,12 @@ async fn run_stdio_server(debug: bool) -> Result<()> {
     let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "stdio-server.log");
 
     // Initialize the tracing subscriber with file logging
-    let level = if debug { tracing::Level::DEBUG } else { tracing::Level::INFO };
-    
+    let level = if debug {
+        tracing::Level::DEBUG
+    } else {
+        tracing::Level::INFO
+    };
+
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive(level.into()))
         .with_writer(file_appender)
@@ -140,7 +147,7 @@ async fn run_stdio_server(debug: bool) -> Result<()> {
 async fn run_http_server(address: String, debug: bool) -> Result<()> {
     // Setup tracing
     let level = if debug { "debug" } else { "info" };
-    
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -153,13 +160,19 @@ async fn run_http_server(address: String, debug: bool) -> Result<()> {
     let addr: SocketAddr = address.parse()?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    tracing::debug!("Rust Documentation Server listening on {}", listener.local_addr()?);
-    tracing::info!("Access the Rust Documentation Server at http://{}/sse", addr);
-    
+    tracing::debug!(
+        "Rust Documentation Server listening on {}",
+        listener.local_addr()?
+    );
+    tracing::info!(
+        "Access the Rust Documentation Server at http://{}/sse",
+        addr
+    );
+
     // Create app and run server
     let app = cratedocs_mcp::transport::http_sse_server::App::new();
     axum::serve(listener, app.router()).await?;
-    
+
     Ok(())
 }
 
@@ -197,13 +210,19 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
         println!("  cargo run --bin cratedocs -- test --tool lookup_crate --crate-name tokio --version 1.35.0");
         println!("  cargo run --bin cratedocs -- test --tool lookup_item --crate-name tokio --item-path sync::mpsc::Sender");
         println!("  cargo run --bin cratedocs -- test --tool lookup_item --crate-name serde --item-path Serialize --version 1.0.147");
-        println!("  cargo run --bin cratedocs -- test --tool search_crates --query logger --limit 5");
-        println!("  cargo run --bin cratedocs -- test --tool search_crates --query logger --format json");
+        println!(
+            "  cargo run --bin cratedocs -- test --tool search_crates --query logger --limit 5"
+        );
+        println!(
+            "  cargo run --bin cratedocs -- test --tool search_crates --query logger --format json"
+        );
         println!("  cargo run --bin cratedocs -- test --tool lookup_crate --crate-name tokio --output tokio-docs.md");
         println!("\nAvailable tools:");
         println!("  lookup_crate   - Look up documentation for a Rust crate");
         println!("  lookup_item    - Look up documentation for a specific item in a crate");
-        println!("                   Format: 'module::path::ItemName' (e.g., 'sync::mpsc::Sender')");
+        println!(
+            "                   Format: 'module::path::ItemName' (e.g., 'sync::mpsc::Sender')"
+        );
         println!("                   The tool will try to detect if it's a struct, enum, trait, fn, or macro");
         println!("  search_crates  - Search for crates on crates.io");
         println!("  help           - Show this help information");
@@ -212,10 +231,14 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
         println!("  --output       - Write output to a file instead of stdout");
         return Ok(());
     }
-    
+
     // Set up console logging
-    let level = if debug { tracing::Level::DEBUG } else { tracing::Level::INFO };
-    
+    let level = if debug {
+        tracing::Level::DEBUG
+    } else {
+        tracing::Level::INFO
+    };
+
     tracing_subscriber::fmt()
         .with_max_level(level)
         .without_time()
@@ -224,51 +247,51 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
 
     // Create router instance
     let router = DocRouter::new();
-    
+
     tracing::info!("Testing tool: {}", tool);
-    
+
     // Get format option (default to markdown)
     let format = format.unwrap_or_else(|| "markdown".to_string());
-    
+
     // Prepare arguments based on the tool being tested
     let arguments = match tool.as_str() {
         "lookup_crate" => {
-            let crate_name = crate_name.ok_or_else(|| 
-                anyhow::anyhow!("--crate-name is required for lookup_crate tool"))?;
-            
+            let crate_name = crate_name
+                .ok_or_else(|| anyhow::anyhow!("--crate-name is required for lookup_crate tool"))?;
+
             json!({
                 "crate_name": crate_name,
                 "version": version,
             })
-        },
+        }
         "lookup_item" => {
-            let crate_name = crate_name.ok_or_else(|| 
-                anyhow::anyhow!("--crate-name is required for lookup_item tool"))?;
-            let item_path = item_path.ok_or_else(|| 
-                anyhow::anyhow!("--item-path is required for lookup_item tool"))?;
-            
+            let crate_name = crate_name
+                .ok_or_else(|| anyhow::anyhow!("--crate-name is required for lookup_item tool"))?;
+            let item_path = item_path
+                .ok_or_else(|| anyhow::anyhow!("--item-path is required for lookup_item tool"))?;
+
             json!({
                 "crate_name": crate_name,
                 "item_path": item_path,
                 "version": version,
             })
-        },
+        }
         "search_crates" => {
-            let query = query.ok_or_else(|| 
-                anyhow::anyhow!("--query is required for search_crates tool"))?;
-            
+            let query = query
+                .ok_or_else(|| anyhow::anyhow!("--query is required for search_crates tool"))?;
+
             json!({
                 "query": query,
                 "limit": limit,
             })
-        },
+        }
         _ => return Err(anyhow::anyhow!("Unknown tool: {}", tool)),
     };
-    
+
     // Call the tool and get results
     tracing::debug!("Calling {} with arguments: {}", tool, arguments);
     println!("Executing {} tool...", tool);
-    
+
     let result = match router.call_tool(&tool, arguments).await {
         Ok(result) => result,
         Err(e) => {
@@ -284,7 +307,7 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
             return Ok(());
         }
     };
-    
+
     // Process and output results
     if !result.is_empty() {
         for content in result {
@@ -307,28 +330,44 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
                             // For non-JSON content, wrap in a JSON object
                             json!({ "content": content_str }).to_string()
                         }
-                    },
+                    }
                     "text" => {
                         // For JSON content, try to extract plain text
                         if content_str.trim().starts_with('{') && tool == "search_crates" {
                             match serde_json::from_str::<serde_json::Value>(&content_str) {
                                 Ok(json_value) => {
                                     // Try to create a simple text representation of search results
-                                    if let Some(crates) = json_value.get("crates").and_then(|v| v.as_array()) {
+                                    if let Some(crates) =
+                                        json_value.get("crates").and_then(|v| v.as_array())
+                                    {
                                         let mut text_output = String::from("Search Results:\n\n");
                                         for (i, crate_info) in crates.iter().enumerate() {
-                                            let name = crate_info.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown");
-                                            let description = crate_info.get("description").and_then(|v| v.as_str()).unwrap_or("No description");
-                                            let downloads = crate_info.get("downloads").and_then(|v| v.as_u64()).unwrap_or(0);
-                                            
-                                            text_output.push_str(&format!("{}. {} - {} (Downloads: {})\n", 
-                                                i + 1, name, description, downloads));
+                                            let name = crate_info
+                                                .get("name")
+                                                .and_then(|v| v.as_str())
+                                                .unwrap_or("Unknown");
+                                            let description = crate_info
+                                                .get("description")
+                                                .and_then(|v| v.as_str())
+                                                .unwrap_or("No description");
+                                            let downloads = crate_info
+                                                .get("downloads")
+                                                .and_then(|v| v.as_u64())
+                                                .unwrap_or(0);
+
+                                            text_output.push_str(&format!(
+                                                "{}. {} - {} (Downloads: {})\n",
+                                                i + 1,
+                                                name,
+                                                description,
+                                                downloads
+                                            ));
                                         }
                                         text_output
                                     } else {
                                         content_str
                                     }
-                                },
+                                }
                                 Err(_) => content_str,
                             }
                         } else {
@@ -345,29 +384,29 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
                                 .replace("*", "")
                                 .replace("`", "")
                         }
-                    },
+                    }
                     _ => content_str, // Default to original markdown for "markdown" or any other format
                 };
-                
+
                 // Output to file or stdout
                 match &output {
                     Some(file_path) => {
                         use std::fs;
                         use std::io::Write;
-                        
+
                         tracing::info!("Writing output to file: {}", file_path);
-                        
+
                         // Ensure parent directory exists
                         if let Some(parent) = std::path::Path::new(file_path).parent() {
                             if !parent.exists() {
                                 fs::create_dir_all(parent)?;
                             }
                         }
-                        
+
                         let mut file = fs::File::create(file_path)?;
                         file.write_all(formatted_output.as_bytes())?;
                         println!("Results written to file: {}", file_path);
-                    },
+                    }
                     None => {
                         // Print to stdout
                         println!("\n--- TOOL RESULT ---\n");
@@ -382,6 +421,6 @@ async fn run_test_tool(config: TestToolConfig) -> Result<()> {
     } else {
         println!("Tool returned no results");
     }
-    
+
     Ok(())
 }
