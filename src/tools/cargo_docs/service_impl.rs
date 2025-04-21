@@ -1,6 +1,7 @@
 use crate::tools::cargo_docs::CargoDocRouter;
-use rmcp::{model::*, service::RequestContext, Error as McpError, RoleServer, ServerHandler};
+use rmcp::{model::*, service::RequestContext, Error as McpError, RoleServer, ServerHandler, tool_box};
 
+// Derive the tool_box implementation which provides list_tools and call_tool
 impl ServerHandler for CargoDocRouter {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
@@ -12,6 +13,8 @@ impl ServerHandler for CargoDocRouter {
             ),
         }
     }
+    
+    tool_box!(@derive);
 
     async fn list_resources(
         &self,
@@ -62,3 +65,6 @@ impl ServerHandler for CargoDocRouter {
         })
     }
 }
+
+// Generate the tool_box with the list of available tools
+tool_box!(CargoDocRouter { lookup_crate, lookup_item_tool, search_crates });

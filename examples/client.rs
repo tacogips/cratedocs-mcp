@@ -73,12 +73,15 @@ async fn stdio_client() -> Result<()> {
     stdout.read_line(&mut tools_response).await?;
     println!("Tools list response: {:?}", tools_response);
     
-    // Send a request to lookup tokio crate using direct method call
+    // Send a request to lookup tokio crate using tools/call method
     let request = json!({
         "jsonrpc": "2.0",
-        "method": "lookup_crate",
+        "method": "tools/call",
         "params": {
-            "crate_name": "tokio"
+            "name": "lookup_crate",
+            "arguments": {
+                "crate_name": "tokio"
+            }
         },
         "id": 2
     });
