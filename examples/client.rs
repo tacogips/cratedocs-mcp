@@ -38,13 +38,16 @@ async fn stdio_client() -> Result<()> {
     // Read the response
     let mut response = String::new();
     stdout.read_line(&mut response).await?;
-    
+
     let parsed: Value = serde_json::from_str(&response)?;
-    println!("Received response: {}", serde_json::to_string_pretty(&parsed)?);
+    println!(
+        "Received response: {}",
+        serde_json::to_string_pretty(&parsed)?
+    );
 
     // Terminate the child process
     child.kill().await?;
-    
+
     Ok(())
 }
 
@@ -68,9 +71,9 @@ async fn http_sse_client() -> Result<()> {
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
     let sse_url = "http://127.0.0.1:8080/sse";
-    
+
     println!("Getting session ID from SSE endpoint...");
-    
+
     // For a real implementation, you would use an SSE client library
     // This is a simplified example that just gets the session ID from the first message
     let response = client.get(sse_url).send().await?;
@@ -86,7 +89,7 @@ async fn http_sse_client() -> Result<()> {
         return Ok(());
     }
     // This is just a placeholder - in a real SSE client you would parse the actual event
-    let session_id = "example_session_id".to_string(); 
+    let session_id = "example_session_id".to_string();
 
     // Send a request to search for crates
     let request_url = format!("{}?sessionId={}", sse_url, session_id);
@@ -104,10 +107,7 @@ async fn http_sse_client() -> Result<()> {
     });
 
     println!("Sending request to search for crates...");
-    let response = client.post(&request_url)
-        .json(&request_body)
-        .send()
-        .await?;
+    let response = client.post(&request_url).json(&request_body).send().await?;
 
     if response.status().is_success() {
         println!("Request sent successfully");
@@ -125,16 +125,16 @@ async fn http_sse_client() -> Result<()> {
 async fn main() -> Result<()> {
     println!("Rust Documentation Server Client Example");
     println!("---------------------------------------");
-    
+
     println!("\n1. Testing STDIN/STDOUT client:");
     if let Err(e) = stdio_client().await {
         println!("Error in STDIN/STDOUT client: {}", e);
     }
-    
+
     println!("\n2. Testing HTTP/SSE client:");
     if let Err(e) = http_sse_client().await {
         println!("Error in HTTP/SSE client: {}", e);
     }
-    
+
     Ok(())
 }

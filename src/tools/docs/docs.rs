@@ -1,4 +1,4 @@
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::sync::Arc;
 
 use html2md::parse_html;
 //use mcp_core::{
@@ -8,12 +8,9 @@ use html2md::parse_html;
 //    Content, Resource, Tool, ToolError,
 //};
 //use mcp_server::router::CapabilitiesBuilder;
-use rmcp::{
-    handler::server::wrapper::Json, model::*, schemars, tool, Error as McpError, ServerHandler,
-};
+use rmcp::{schemars, tool};
 
 use reqwest::Client;
-use serde_json::{json, Value};
 use tokio::sync::Mutex;
 
 // Cache for documentation lookups to avoid repeated requests
@@ -265,18 +262,16 @@ impl CargoDocRouter {
                         crate_name, ver, crate_name, module_path, item_type, item_name
                     )
                 }
+            } else if module_path.is_empty() {
+                format!(
+                    "https://docs.rs/{}/latest/{}/{}.{}.html",
+                    crate_name, crate_name, item_type, item_name
+                )
             } else {
-                if module_path.is_empty() {
-                    format!(
-                        "https://docs.rs/{}/latest/{}/{}.{}.html",
-                        crate_name, crate_name, item_type, item_name
-                    )
-                } else {
-                    format!(
-                        "https://docs.rs/{}/latest/{}/{}/{}.{}.html",
-                        crate_name, crate_name, module_path, item_type, item_name
-                    )
-                }
+                format!(
+                    "https://docs.rs/{}/latest/{}/{}/{}.{}.html",
+                    crate_name, crate_name, module_path, item_type, item_name
+                )
             };
 
             // Try to fetch the documentation page

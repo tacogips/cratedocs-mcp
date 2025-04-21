@@ -1,18 +1,15 @@
-use rmcp::{
-    Error as McpError, RoleServer, ServerHandler, model::*,
-    service::RequestContext,
-};
 use crate::tools::docs::docs::CargoDocRouter;
+use rmcp::{model::*, service::RequestContext, Error as McpError, RoleServer, ServerHandler};
 
 impl ServerHandler for CargoDocRouter {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::V_2024_11_05,
-            capabilities: ServerCapabilities::builder()
-                .enable_tools()
-                .build(),
+            capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
-            instructions: Some("Rust Documentation MCP Server for accessing Rust crate documentation.".to_string()),
+            instructions: Some(
+                "Rust Documentation MCP Server for accessing Rust crate documentation.".to_string(),
+            ),
         }
     }
 
@@ -32,10 +29,7 @@ impl ServerHandler for CargoDocRouter {
         _param: ReadResourceRequestParam,
         _: RequestContext<RoleServer>,
     ) -> Result<ReadResourceResult, McpError> {
-        Err(McpError::resource_not_found(
-            "resource_not_supported",
-            None,
-        ))
+        Err(McpError::resource_not_found("resource_not_supported", None))
     }
 
     async fn list_prompts(

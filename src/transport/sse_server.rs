@@ -1,7 +1,7 @@
+use crate::tools::docs::CargoDocRouter;
 use anyhow::Result;
 use rmcp::transport::sse_server::SseServer;
 use std::net::SocketAddr;
-use crate::tools::docs::CargoDocRouter;
 
 pub struct SseServerApp {
     bind_addr: SocketAddr,
@@ -14,14 +14,14 @@ impl SseServerApp {
 
     pub async fn serve(self) -> Result<()> {
         let sse_server = SseServer::serve(self.bind_addr).await?;
-        let cancellation_token = sse_server.with_service(|| CargoDocRouter::new());
-        
+        let cancellation_token = sse_server.with_service(CargoDocRouter::new);
+
         // Wait for Ctrl+C signal to gracefully shutdown
         tokio::signal::ctrl_c().await?;
-            
+
         // Cancel the server
         cancellation_token.cancel();
-        
+
         Ok(())
     }
 }
