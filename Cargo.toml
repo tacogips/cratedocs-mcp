@@ -50,5 +50,5 @@ mockito = "1.2"
 
 # Main binary with subcommands
 [[bin]]
-name = "cratedocs"
+name = "cratedocs-mcp"
 path = "src/bin/cratedocs.rs"
