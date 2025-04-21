@@ -133,15 +133,13 @@ impl CargoDocRouter {
     //        ]
     //    }
 
-    #[tool(description = "Increment the counter by 1")]
+    #[tool(name = "lookup_crate")]
     async fn lookup_crate(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate to look up")]
         crate_name: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest)")]
         version: Option<String>,
     ) -> Result<String, ToolError> {
         // Check cache first
@@ -196,8 +194,15 @@ impl CargoDocRouter {
         Ok(markdown_body)
     }
 
-    // Search crates.io for crates matching a query
-    async fn search_crates(&self, query: String, limit: Option<u32>) -> Result<String, ToolError> {
+    #[tool(name = "search_crates")]
+    async fn search_crates(
+        &self,
+        #[tool(param)]
+        query: String,
+        
+        #[tool(param)]
+        limit: Option<u32>
+    ) -> Result<String, ToolError> {
         let limit = limit.unwrap_or(10).min(100); // Cap at 100 results
 
         let url = format!(
@@ -237,7 +242,6 @@ impl CargoDocRouter {
         }
     }
 
-    // Get documentation for a specific item in a crate
     async fn lookup_item(
         &self,
         crate_name: String,
