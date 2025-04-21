@@ -27,3 +27,5 @@ output_tests
 **/.direnv
 
 **.private
+
+rust-sdk
