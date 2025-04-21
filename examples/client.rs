@@ -39,6 +39,7 @@ async fn stdio_client() -> Result<()> {
     let mut response = String::new();
     stdout.read_line(&mut response).await?;
 
+    println!("response {:?}", response);
     let parsed: Value = serde_json::from_str(&response)?;
     println!(
         "Received response: {}",
@@ -131,10 +132,10 @@ async fn main() -> Result<()> {
         println!("Error in STDIN/STDOUT client: {}", e);
     }
 
-    println!("\n2. Testing HTTP/SSE client:");
-    if let Err(e) = http_sse_client().await {
-        println!("Error in HTTP/SSE client: {}", e);
-    }
+    //println!("\n2. Testing HTTP/SSE client:");
+    //if let Err(e) = http_sse_client().await {
+    //    println!("Error in HTTP/SSE client: {}", e);
+    //}
 
     Ok(())
 }
