@@ -7,7 +7,7 @@ use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 async fn stdio_client() -> Result<()> {
     // Start the stdio-server in a separate process
     let mut child = tokio::process::Command::new("cargo")
-        .args(["run", "--bin", "stdio-server"])
+        .args(["run", "--bin", "cratedocs-mcp", "stdio"])
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .spawn()?;
@@ -61,7 +61,7 @@ async fn http_sse_client() -> Result<()> {
     // Create a separate task to run the server
     let _server = tokio::spawn(async {
         tokio::process::Command::new("cargo")
-            .args(["run", "--bin", "axum-docs"])
+            .args(["run", "--bin", "cratedocs-mcp", "http"])
             .output()
             .await
             .expect("Failed to start server");

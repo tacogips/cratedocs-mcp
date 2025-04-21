@@ -1,6 +1,7 @@
 # CrateDocs MCP Development Guide
 
 ## Build Commands
+
 - Build project: `cargo build`
 - Run STDIN/STDOUT server: `cargo run --bin stdio-server`
 - Run HTTP/SSE server: `cargo run --bin axum-docs`
@@ -10,6 +11,7 @@
 - Check code: `cargo clippy`
 
 ## Code Style Guidelines
+
 - **Naming**: Use snake_case for functions/variables, CamelCase for types/structs
 - **Error Handling**: Use `Result<T, ToolError>` for functions that can fail
 - **Imports**: Organize imports by external crates first, then internal modules
@@ -20,7 +22,14 @@
 - **Responses**: Return structured responses via `Content::text()`
 
 ## Project Architecture
+
 - Implements MCP protocol for Rust documentation tools
 - `DocRouter` is the core component for handling tool requests
 - Uses reqwest for API requests, tokio for async runtime
 - Async handlers for all tool implementations
+
+## how to analyze code
+
+- the main dependency source ./rust-sdk
+- use zed function
+- use Brave web api if needed

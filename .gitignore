@@ -29,3 +29,4 @@ output_tests
 **.private
 
 result
+rust-sdk
