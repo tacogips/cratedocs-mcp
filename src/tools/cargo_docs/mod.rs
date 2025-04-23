@@ -1,5 +1,3 @@
-mod service_impl;
-
 use std::sync::Arc;
 
 use html2md::parse_html;
