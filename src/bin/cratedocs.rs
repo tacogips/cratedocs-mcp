@@ -1,8 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::net::SocketAddr;
-use temp_dir::TempDir;
-use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{self, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[derive(Parser)]
@@ -45,24 +43,7 @@ async fn main() -> Result<()> {
 }
 
 async fn run_stdio_server(debug: bool) -> Result<()> {
-    // Create a temp directory with prefix
-    let temp_dir = TempDir::with_prefix("cratedocs-mcp").map_err(|e| anyhow::anyhow!("Failed to create temp directory: {}", e))?;
-    
-    // Create logs directory inside the temp directory
-    let logs_dir = temp_dir.path().join("logs");
-    std::fs::create_dir_all(&logs_dir).map_err(|e| anyhow::anyhow!("Failed to create logs directory: {}", e))?;
-    
-    // Store the temp directory in a static variable to keep it alive for the duration of the program
-    // This is important because TempDir deletes the directory when dropped
-    static mut TEMP_DIR: Option<TempDir> = None;
-    unsafe {
-        TEMP_DIR = Some(temp_dir);
-    }
-    
-    // Set up file appender for logging
-    let file_appender = RollingFileAppender::new(Rotation::DAILY, logs_dir, "stdio-server.log");
-
-    // Initialize the tracing subscriber with file logging
+    // Initialize the tracing subscriber with stderr logging
     let level = if debug {
         tracing::Level::DEBUG
     } else {
@@ -71,7 +52,7 @@ async fn run_stdio_server(debug: bool) -> Result<()> {
 
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive(level.into()))
-        .with_writer(file_appender)
+        .with_writer(std::io::stderr) // Explicitly use stderr for logging
         .with_target(false)
         .with_thread_ids(true)
         .with_file(true)
