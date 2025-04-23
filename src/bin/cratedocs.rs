@@ -57,6 +57,7 @@ async fn run_stdio_server(debug: bool) -> Result<()> {
         .with_thread_ids(true)
         .with_file(true)
         .with_line_number(true)
+        .with_ansi(false) // Disable ANSI color codes
         .init();
 
     tracing::info!("Starting MCP documentation server in STDIN/STDOUT mode");
@@ -76,7 +77,7 @@ async fn run_http_server(address: String, debug: bool) -> Result<()> {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| format!("{},{}", level, env!("CARGO_CRATE_NAME")).into()),
         )
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_ansi(false)) // Disable ANSI color codes
         .init();
 
     // Parse socket address

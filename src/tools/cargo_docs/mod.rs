@@ -3,10 +3,11 @@ mod service_impl;
 use std::sync::Arc;
 
 use html2md::parse_html;
-use rmcp::{schemars, tool};
 
 use reqwest::Client;
 use tokio::sync::Mutex;
+
+use rmcp::{model::*, schemars, tool, ServerHandler};
 
 // Cache for documentation lookups to avoid repeated requests
 #[derive(Clone)]
@@ -311,5 +312,19 @@ impl CargoDocRouter {
             "Failed to fetch item documentation. No matching item found. Last error: {}",
             last_error.unwrap_or_else(|| "Unknown error".to_string())
         )
+    }
+}
+
+#[tool(tool_box)]
+impl ServerHandler for CargoDocRouter {
+    fn get_info(&self) -> ServerInfo {
+        ServerInfo {
+            protocol_version: ProtocolVersion::V_2024_11_05,
+            capabilities: ServerCapabilities::builder().enable_tools().build(),
+            server_info: Implementation::from_build_env(),
+            instructions: Some(
+                "Rust Documentation MCP Server for accessing Rust crate documentation.".to_string(),
+            ),
+        }
     }
 }
