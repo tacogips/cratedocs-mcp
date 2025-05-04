@@ -120,3 +120,111 @@ async fn test_cache_in_lookup() {
     // Results should be identical when pulled from cache
     assert_eq!(first_result, second_result);
 }
+
+#[test]
+async fn test_lookup_item_examples() {
+    let router = CargoDocRouter::new();
+    
+    // Test lookup examples for a well-documented item that should have examples
+    let examples = router.lookup_item_examples(
+        "std".to_string(),
+        "vec::Vec".to_string(),
+        None
+    ).await;
+    
+    // Verify we got substantial content
+    assert!(!examples.is_empty());
+    assert!(examples.contains("Usage Examples"));
+    
+    // Should include either real examples or generated examples
+    assert!(examples.contains("```rust") || examples.contains("```"));
+}
+
+#[test]
+async fn test_analyze_type_relationships() {
+    let router = CargoDocRouter::new();
+    
+    // Test analysis for a standard type that should have well-defined relationships
+    let relationships = router.analyze_type_relationships(
+        "std".to_string(),
+        "result::Result".to_string(),
+        None
+    ).await;
+    
+    // Verify we got substantial content
+    assert!(!relationships.is_empty());
+    assert!(relationships.contains("Type Relationships"));
+    
+    // Should include some guidance about Result usage patterns
+    assert!(relationships.contains("Usage Patterns") || 
+            relationships.contains("Working with Result types") ||
+            relationships.contains("impl") ||
+            relationships.contains("match"));
+}
+
+#[test]
+async fn test_examples_cache() {
+    let cache = DocCache::new();
+    let examples = vec![
+        CodeExample {
+            title: "Test Example".to_string(),
+            code: "fn main() {}".to_string(),
+            description: "A test example".to_string(),
+        }
+    ];
+    let key = "examples:test";
+    
+    // Initially the key should not exist
+    assert_eq!(cache.get_examples(key).await, None);
+    
+    // Set a value
+    cache.set_examples(key.to_string(), examples.clone()).await;
+    
+    // Now we should get the value back
+    assert_eq!(cache.get_examples(key).await.unwrap()[0].title, "Test Example");
+    assert_eq!(cache.get_examples(key).await.unwrap()[0].code, "fn main() {}");
+}
+
+#[test]
+async fn test_generated_examples() {
+    let router = CargoDocRouter::new();
+    
+    // Test generation of synthetic examples for an item that likely won't have explicit examples
+    // but can be inferred from its type (struct, enum, trait, etc.)
+    let examples = router.lookup_item_examples(
+        "lumin".to_string(),
+        "core::Lumin".to_string(),
+        None
+    ).await;
+    
+    // Verify we got content
+    assert!(!examples.is_empty());
+    
+    // Should include the phrases indicating generated examples
+    assert!(examples.contains("Usage Examples"));
+}
+
+#[test]
+async fn test_relationship_analysis_impl() {
+    let router = CargoDocRouter::new();
+    
+    // Test the implementation details of type relationship analysis
+    let relationships = router.analyze_type_relationships(
+        "serde".to_string(),
+        "Serialize".to_string(),
+        None
+    ).await;
+    
+    // Verify we got substantial content
+    assert!(!relationships.is_empty());
+    
+    // Should include sections that analyze the type
+    assert!(relationships.contains("Type Relationships") || 
+            relationships.contains("trait") ||
+            relationships.contains("impl"));
+    
+    // Should include guidance on usage patterns
+    assert!(relationships.contains("Usage Patterns") || 
+            relationships.contains("Implementing") ||
+            relationships.contains("Common"));
+}
