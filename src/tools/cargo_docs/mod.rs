@@ -7,6 +7,9 @@ use tokio::sync::Mutex;
 
 use rmcp::{model::*, schemars, tool, ServerHandler};
 
+#[cfg(test)]
+mod tests;
+
 // Cache for documentation lookups to avoid repeated requests
 #[derive(Clone)]
 pub struct DocCache {
