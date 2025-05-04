@@ -58,15 +58,15 @@ impl CargoDocRouter {
         }
     }
 
-    #[tool(description = "Look up documentation for a Rust crate (returns markdown)")]
+    #[tool(description = "Look up documentation for a Rust crate (returns markdown). This tool fetches and converts the official docs.rs documentation into readable markdown format, providing a comprehensive overview of the crate's functionality, modules, and public API. Example usage: To look up the latest documentation for tokio: call with {\"crate_name\": \"tokio\"}. To look up a specific version: {\"crate_name\": \"serde\", \"version\": \"1.0.152\"}.")]
     async fn lookup_crate(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate to look up")]
+        #[schemars(description = "The name of the crate to look up. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio', 'reqwest').")]
         crate_name: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest)")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest.")]
         version: Option<String>,
     ) -> String {
         // Check cache first
@@ -124,37 +124,37 @@ impl CargoDocRouter {
     }
 
     #[tool(
-        description = "Look up documentation for a specific item in a Rust crate (returns markdown)"
+        description = "Look up documentation for a specific item in a Rust crate (returns markdown). This tool allows pinpoint access to documentation for structs, enums, traits, functions, or macros within a crate, automating the process of finding the right documentation page and converting it to readable markdown. Example usage: For the Vec type: {\"crate_name\": \"alloc\", \"item_path\": \"vec::Vec\"}. For a trait: {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\", \"version\": \"1.28.0\"}. For a function: {\"crate_name\": \"reqwest\", \"item_path\": \"get\"}."
     )]
     async fn lookup_item_tool(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate")]
+        #[schemars(description = "The name of the crate where the item is defined. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio').")]
         crate_name: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Path to the item (e.g., 'vec::Vec' or 'crate_name::vec::Vec' - crate prefix will be automatically stripped)"
+            description = "Full path to the item using double-colon notation (e.g., 'vec::Vec', 'serde::Serialize', 'tokio::io::AsyncRead'). You can include or omit the crate prefix - it will be automatically handled. The tool will attempt to detect if the item is a struct, enum, trait, function, or macro."
         )]
         item_path: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest)")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest.")]
         version: Option<String>,
     ) -> String {
         self.lookup_item(crate_name, item_path, version).await
     }
 
-    #[tool(description = "Search for Rust crates on crates.io (returns JSON or markdown)")]
+    #[tool(description = "Search for Rust crates on crates.io (returns JSON or markdown). This tool performs keyword searches against the crates.io registry to discover relevant crates for specific functionality, providing detailed information about each matched crate including description, download statistics, and version history. Example usage: Basic search: {\"query\": \"http client\"}. Search with limit: {\"query\": \"json serialization\", \"limit\": 20}. Specific feature search: {\"query\": \"async database\", \"limit\": 5}.")]
     async fn search_crates(
         &self,
         #[tool(param)]
-        #[schemars(description = "The search query")]
+        #[schemars(description = "The search query for finding crates. Can be a keyword, functionality description, or partial crate name. More specific queries yield better results (e.g., 'http client', 'serde json', 'async runtime').")]
         query: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Maximum number of results to return (optional, defaults to 10, max 100)"
+            description = "Maximum number of results to return (optional, defaults to 10, max 100). Increase this value for broader searches where you need to compare multiple options. Higher values may increase response time."
         )]
         limit: Option<u32>,
     ) -> String {
@@ -321,7 +321,7 @@ impl ServerHandler for CargoDocRouter {
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
-                "Rust Documentation MCP Server for accessing Rust crate documentation.".to_string(),
+                "Rust Documentation MCP Server for accessing and searching Rust crate documentation. This server provides tools to lookup entire crate documentation, search for specific crates on crates.io, and find documentation for specific items (structs, enums, traits, functions, macros) within crates. Use these tools to help understand Rust library APIs and discover appropriate crates for solving specific programming tasks. All documentation is automatically fetched from docs.rs and converted to markdown format for easy consumption.\n\nExample tool call sequence for solving a programming task:\n1. First search for relevant crates: `search_crates({\"query\": \"http client\"})`\n2. Look up detailed documentation for a promising crate: `lookup_crate({\"crate_name\": \"reqwest\"})`\n3. Find specific API components: `lookup_item_tool({\"crate_name\": \"reqwest\", \"item_path\": \"Client\"})`\n4. Check alternative implementations: `lookup_item_tool({\"crate_name\": \"hyper\", \"item_path\": \"Client\"})`".to_string(),
             ),
         }
     }
