@@ -84,15 +84,15 @@ impl CargoDocRouter {
         }
     }
 
-    #[tool(description = "Look up documentation for a Rust crate (returns markdown). This tool fetches and converts the official docs.rs documentation into readable markdown format, providing a comprehensive overview of the crate's functionality, modules, and public API. Example usage: To look up the latest documentation for tokio: call with {\"crate_name\": \"tokio\"}. To look up a specific version: {\"crate_name\": \"serde\", \"version\": \"1.0.152\"}.")]
+    #[tool(description = "Look up comprehensive documentation for a Rust crate (returns markdown). This tool fetches and converts the official docs.rs documentation into readable markdown format, providing a comprehensive overview of the crate's functionality, modules, and public API. The documentation includes the crate's features, modules, types, and functions. This is typically the first step in understanding a crate's capabilities. Example usage: To look up the latest documentation for tokio: `{\"name\": \"lookup_crate\", \"arguments\": {\"crate_name\": \"tokio\"}}`. To look up a specific version: `{\"name\": \"lookup_crate\", \"arguments\": {\"crate_name\": \"serde\", \"version\": \"1.0.152\"}}`. For standard library: `{\"name\": \"lookup_crate\", \"arguments\": {\"crate_name\": \"std\"}}`")]
     async fn lookup_crate(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate to look up. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio', 'reqwest').")]
+        #[schemars(description = "The name of the crate to look up. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio', 'reqwest'). This parameter is case-sensitive and must match exactly how the crate is published. For standard library modules, use 'std' as the crate name.")]
         crate_name: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest.")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest. This is useful when working with codebases using older versions of a dependency, or to understand API changes between versions.")]
         version: Option<String>,
     ) -> String {
         // Check cache first
@@ -150,37 +150,37 @@ impl CargoDocRouter {
     }
 
     #[tool(
-        description = "Look up documentation for a specific item in a Rust crate (returns markdown). This tool allows pinpoint access to documentation for structs, enums, traits, functions, or macros within a crate, automating the process of finding the right documentation page and converting it to readable markdown. Example usage: For the Vec type: {\"crate_name\": \"alloc\", \"item_path\": \"vec::Vec\"}. For a trait: {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\", \"version\": \"1.28.0\"}. For a function: {\"crate_name\": \"reqwest\", \"item_path\": \"get\"}."
+        description = "Look up detailed documentation for a specific item in a Rust crate (returns markdown). This tool provides precise API documentation for structs, enums, traits, functions, or macros within a crate, showing method signatures, associated types, trait implementations, and other details. Use this when you need to understand a specific type's API, its methods, fields, or implementation details. Example usage: For the Vec type: `{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"alloc\", \"item_path\": \"vec::Vec\"}}`. For a trait: `{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\", \"version\": \"1.28.0\"}}`. For a function: `{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"get\"}}`. For standard lib: `{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"std\", \"item_path\": \"fs::File\"}}`"
     )]
     async fn lookup_item_tool(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate where the item is defined. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio').")]
+        #[schemars(description = "The name of the crate where the item is defined. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio'). For standard library types, use 'std' or the appropriate module like 'alloc'. Case-sensitive and must match exactly how the crate is published.")]
         crate_name: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Full path to the item using double-colon notation (e.g., 'vec::Vec', 'serde::Serialize', 'tokio::io::AsyncRead'). You can include or omit the crate prefix - it will be automatically handled. The tool will attempt to detect if the item is a struct, enum, trait, function, or macro."
+            description = "Full path to the item using double-colon notation (e.g., 'vec::Vec', 'serde::Serialize', 'tokio::io::AsyncRead'). You can include or omit the crate prefix - it will be automatically handled. For nested types, include the full path (e.g., 'http::response::Builder'). The tool will automatically detect if the item is a struct, enum, trait, function, or macro."
         )]
         item_path: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest.")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Provide a specific version string (e.g., '1.0.0', '0.11.2') to lookup documentation for that version instead of the latest. Useful when working with a specific version of a dependency.")]
         version: Option<String>,
     ) -> String {
         self.lookup_item(crate_name, item_path, version).await
     }
 
-    #[tool(description = "Search for Rust crates on crates.io (returns JSON or markdown). This tool performs keyword searches against the crates.io registry to discover relevant crates for specific functionality, providing detailed information about each matched crate including description, download statistics, and version history. Example usage: Basic search: {\"query\": \"http client\"}. Search with limit: {\"query\": \"json serialization\", \"limit\": 20}. Specific feature search: {\"query\": \"async database\", \"limit\": 5}.")]
+    #[tool(description = "Search for Rust crates on crates.io (returns JSON or markdown). This tool helps you discover relevant Rust libraries for specific functionality by searching the official crates.io registry. Use this tool when you need to find crates that implement a particular feature, or when you're looking for alternatives to a known crate. Results include crate names, descriptions, download statistics, creation dates, and documentation links. Example usage: Basic search: `{\"name\": \"search_crates\", \"arguments\": {\"query\": \"http client\"}}`. Search with limit: `{\"name\": \"search_crates\", \"arguments\": {\"query\": \"json serialization\", \"limit\": 20}}`. Specific feature search: `{\"name\": \"search_crates\", \"arguments\": {\"query\": \"async database\", \"limit\": 5}}`. Alternatives to a known crate: `{\"name\": \"search_crates\", \"arguments\": {\"query\": \"serde alternatives\"}}`")]
     async fn search_crates(
         &self,
         #[tool(param)]
-        #[schemars(description = "The search query for finding crates. Can be a keyword, functionality description, or partial crate name. More specific queries yield better results (e.g., 'http client', 'serde json', 'async runtime').")]
+        #[schemars(description = "The search query for finding crates. Can be a keyword, functionality description, or partial crate name. For best results, use specific terms that describe the functionality you need (e.g., 'http client', 'serde json', 'async runtime', 'command line parser'). You can also search for a specific crate by name to find similar alternatives.")]
         query: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Maximum number of results to return (optional, defaults to 10, max 100). Increase this value for broader searches where you need to compare multiple options. Higher values may increase response time."
+            description = "Maximum number of results to return (optional, defaults to 10, max 100). Increase this value for broader searches where you need to compare multiple options or when searching for a less common functionality. A value between 5-20 is recommended for most searches to get a good overview of available options."
         )]
         limit: Option<u32>,
     ) -> String {
@@ -224,21 +224,21 @@ impl CargoDocRouter {
         }
     }
     
-    #[tool(description = "Look up usage examples for a specific item in a Rust crate. This tool searches for and extracts code examples showing how to use a particular API item, providing practical context for how the item should be used. It helps bridge the gap between documentation and implementation by showing real-world usage patterns and common idioms. Example usage: {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"} will return examples of how to use the AsyncRead trait.")]
+    #[tool(description = "Look up practical usage examples for a specific item in a Rust crate. This tool extracts or generates code examples showing how to properly use a particular API item. It focuses on practical implementation patterns, common idioms, and best practices. Use this tool when you need to understand how to actually implement code with a specific type or function, beyond just the API signatures. It's especially useful for understanding complex types like Result or Future, or traits with associated types. Example usage: `{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"}}` will return examples of how to use the AsyncRead trait. For standard library: `{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"std\", \"item_path\": \"fs::File\"}}`. For a container: `{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"std\", \"item_path\": \"collections::HashMap\"}}`. For error handling: `{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Error\"}}`")]
     async fn lookup_item_examples(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate where the item is defined. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio').")]
+        #[schemars(description = "The name of the crate where the item is defined. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio'). For standard library types, use 'std' or the appropriate module name. Case-sensitive and must match exactly how the crate is published.")]
         crate_name: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Full path to the item using double-colon notation (e.g., 'vec::Vec', 'serde::Serialize', 'tokio::io::AsyncRead'). You can include or omit the crate prefix."
+            description = "Full path to the item using double-colon notation (e.g., 'vec::Vec', 'serde::Serialize', 'tokio::io::AsyncRead'). You can include or omit the crate prefix. For methods or functions, include the parent type/module (e.g., 'String::from_utf8', 'fs::read_to_string'). The tool will automatically extract examples from documentation or generate meaningful examples based on the item type."
         )]
         item_path: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest).")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Useful when working with a specific version of a dependency, especially if the API has changed between versions.")]
         version: Option<String>,
     ) -> String {
         // Check examples cache first
@@ -405,21 +405,21 @@ impl CargoDocRouter {
         examples_content
     }
     
-    #[tool(description = "Analyze type relationships in a Rust crate, showing how various types interact with each other. This tool helps understand how to properly use API types together by revealing their relationships, common conversion patterns, and typical usage flows. Example usage: {\"crate_name\": \"reqwest\", \"item_path\": \"Client\"} will show how Client interacts with other types in the reqwest crate.")]
+    #[tool(description = "Analyze type relationships and usage patterns in a Rust crate. This tool examines how types relate to each other and provides guidance on proper API usage. It identifies return types, parameter types, trait implementations, and offers code examples for handling common patterns like Result and Option types. Use this tool when you need to understand how to correctly use an API, especially for complex types with multiple interacting components, or when you need to understand proper error handling. Example usage: `{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Client\"}}` will show how Client interacts with other types in the reqwest crate. For Result handling: `{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"std\", \"item_path\": \"result::Result\"}}`. For async types: `{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"}}`. For errors: `{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Error\"}}`.")]
     async fn analyze_type_relationships(
         &self,
         #[tool(param)]
-        #[schemars(description = "The name of the crate to analyze. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio').")]
+        #[schemars(description = "The name of the crate to analyze. Must be the exact crate name as published on crates.io (e.g., 'serde', 'tokio'). For standard library types, use 'std' or the appropriate module name. Case-sensitive and must match exactly how the crate is published.")]
         crate_name: String,
 
         #[tool(param)]
         #[schemars(
-            description = "Full path to the item to analyze using double-colon notation (e.g., 'vec::Vec', 'reqwest::Client')."
+            description = "Full path to the item to analyze using double-colon notation (e.g., 'vec::Vec', 'reqwest::Client'). Specify the exact type you want to analyze - the tool will extract its method signatures, parameter types, return types, and show proper usage patterns. This is especially useful for types that return Result or Option, or types that implement various traits."
         )]
         item_path: String,
 
         #[tool(param)]
-        #[schemars(description = "The version of the crate (optional, defaults to latest).")]
+        #[schemars(description = "The version of the crate (optional, defaults to latest). Useful when working with a specific version of a dependency, particularly if the API structure has changed between versions.")]
         version: Option<String>,
     ) -> String {
         let cache_key = if let Some(ver) = &version {
@@ -881,7 +881,7 @@ impl ServerHandler for CargoDocRouter {
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
-                "Rust Documentation MCP Server for accessing and searching Rust crate documentation. This server provides tools to lookup entire crate documentation, search for specific crates on crates.io, and find documentation for specific items (structs, enums, traits, functions, macros) within crates. Enhanced features include analyzing type relationships, discovering usage examples, and understanding API patterns. Use these tools to help understand Rust library APIs and discover appropriate crates for solving specific programming tasks. All documentation is automatically fetched from docs.rs and converted to markdown format for easy consumption.\n\nExample tool call sequences for solving programming tasks:\n\n### Basic Documentation Search\n1. First search for relevant crates: `search_crates({\"query\": \"http client\"})`\n2. Look up detailed documentation for a promising crate: `lookup_crate({\"crate_name\": \"reqwest\"})`\n3. Find specific API components: `lookup_item_tool({\"crate_name\": \"reqwest\", \"item_path\": \"Client\"})`\n4. Check alternative implementations: `lookup_item_tool({\"crate_name\": \"hyper\", \"item_path\": \"Client\"})`\n\n### Enhanced API Understanding\n1. Find API usage examples: `lookup_item_examples({\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"})`\n2. Analyze type relationships and usage patterns: `analyze_type_relationships({\"crate_name\": \"reqwest\", \"item_path\": \"Client\"})`\n3. Get examples of how different types interact: `lookup_item_examples({\"crate_name\": \"reqwest\", \"item_path\": \"Response\"})`\n\nThese enhanced tools provide practical context for using Rust APIs correctly, showing common patterns, proper error handling, and type relationships that help avoid common mistakes.".to_string(),
+                "# Rust Documentation MCP Server\n\nThis server provides enhanced tools for searching, exploring, and understanding Rust crate documentation. Beyond basic documentation lookup, it offers intelligent analysis of type relationships, practical usage examples, and API patterns to help you properly implement Rust code. All documentation is automatically fetched from docs.rs and enriched with additional context.\n\n## Tool Overview\n\n* **search_crates** - Discover relevant Rust libraries for specific functionality needs\n* **lookup_crate** - Get comprehensive documentation for an entire crate\n* **lookup_item_tool** - View detailed API documentation for a specific struct, enum, trait, or function\n* **lookup_item_examples** - Find practical code examples showing how to use a specific API item\n* **analyze_type_relationships** - Examine how types interact and get guidance on proper error handling\n\n## Detailed Tool Usage Examples\n\n### 1. Searching for Crates\n```json\n{\n  \"name\": \"search_crates\",\n  \"arguments\": {\n    \"query\": \"http client\",\n    \"limit\": 5\n  }\n}\n```\nThis searches for HTTP client libraries on crates.io, limiting results to the top 5 matches.\n\n### 2. Looking Up Crate Documentation\n```json\n{\n  \"name\": \"lookup_crate\",\n  \"arguments\": {\n    \"crate_name\": \"reqwest\"\n  }\n}\n```\nOr with a specific version:\n```json\n{\n  \"name\": \"lookup_crate\",\n  \"arguments\": {\n    \"crate_name\": \"tokio\",\n    \"version\": \"1.28.0\"\n  }\n}\n```\n\n### 3. Looking Up Specific Item Documentation\n```json\n{\n  \"name\": \"lookup_item_tool\",\n  \"arguments\": {\n    \"crate_name\": \"reqwest\",\n    \"item_path\": \"Client\"\n  }\n}\n```\nFor nested types:\n```json\n{\n  \"name\": \"lookup_item_tool\",\n  \"arguments\": {\n    \"crate_name\": \"tokio\",\n    \"item_path\": \"io::AsyncRead\",\n    \"version\": \"1.28.0\"\n  }\n}\n```\n\n### 4. Finding Usage Examples\n```json\n{\n  \"name\": \"lookup_item_examples\",\n  \"arguments\": {\n    \"crate_name\": \"serde_json\",\n    \"item_path\": \"Value\"\n  }\n}\n```\nOr for a standard library type:\n```json\n{\n  \"name\": \"lookup_item_examples\",\n  \"arguments\": {\n    \"crate_name\": \"std\",\n    \"item_path\": \"fs::File\"\n  }\n}\n```\n\n### 5. Analyzing Type Relationships\n```json\n{\n  \"name\": \"analyze_type_relationships\",\n  \"arguments\": {\n    \"crate_name\": \"reqwest\",\n    \"item_path\": \"Response\"\n  }\n}\n```\nThis will show how Response relates to other types and proper usage patterns.\n\n## Common Use Case Scenarios\n\n### For Discovering Libraries\n1. Start with searching crates:\n```json\n{\"name\": \"search_crates\", \"arguments\": {\"query\": \"http client\"}}\n```\n2. Look up promising crate documentation:\n```json\n{\"name\": \"lookup_crate\", \"arguments\": {\"crate_name\": \"reqwest\"}}\n```\n3. Compare with alternative crates:\n```json\n{\"name\": \"lookup_crate\", \"arguments\": {\"crate_name\": \"hyper\"}}\n```\n\n### For Understanding API Details\n1. Look up specific type documentation:\n```json\n{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Client\"}}\n```\n2. Analyze how the type relates to other types:\n```json\n{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Client\"}}\n```\n3. Find practical usage examples:\n```json\n{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Client\"}}\n```\n\n### For Implementing Error Handling\n1. Understand the error type:\n```json\n{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Error\"}}\n```\n2. See examples of error handling:\n```json\n{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"reqwest\", \"item_path\": \"Error\"}}\n```\n3. Analyze Result relationships:\n```json\n{\"name\": \"analyze_type_relationships\", \"arguments\": {\"crate_name\": \"std\", \"item_path\": \"result::Result\"}}\n```\n\n### For Working with Async Code\n1. Understand the trait:\n```json\n{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"}}\n```\n2. Find usage patterns:\n```json\n{\"name\": \"lookup_item_examples\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncRead\"}}\n```\n3. Look up extension methods:\n```json\n{\"name\": \"lookup_item_tool\", \"arguments\": {\"crate_name\": \"tokio\", \"item_path\": \"io::AsyncReadExt\"}}\n```\n\nThese enhanced tools help bridge the gap between documentation and implementation by providing practical context for correctly using Rust APIs, including proper error handling, type conversion patterns, and idiomatic usage.".to_string(),
             ),
         }
     }
