@@ -2,7 +2,7 @@
   description = "cratedocs-mcp-forked";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:tacogips/nixpkgs-security/ae36ce5d71747ef2655933b315a361463ea90d82";
     flake-utils.url = "github:numtide/flake-utils";
     fenix = {
       url = "github:nix-community/fenix";
@@ -51,7 +51,7 @@
             pkgs.openssl
             pkgs.pkg-config
             pkgs.nodejs
-            pkgs.nodePackages.npm
+            pkgs.nodejs_22
             pkgs.go-task
           ];
 
